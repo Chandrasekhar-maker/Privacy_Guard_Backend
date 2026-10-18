@@ -28,12 +28,15 @@ async def root():
 @router.get("/health", response_model=HealthResponse, summary="Health check")
 async def health_check():
     """Check API and database connectivity."""
+    import asyncio
     db_status = "disconnected"
     try:
         db = get_db()
-        # Lightweight connectivity test
-        await db.collection("_health").document("ping").get()
+        # Lightweight connectivity test with 3.0s timeout
+        await asyncio.wait_for(db.collection("_health").document("ping").get(), timeout=3.0)
         db_status = "connected"
+    except asyncio.TimeoutError:
+        db_status = "timeout"
     except Exception as e:
         db_status = f"error: {str(e)[:80]}"
 
