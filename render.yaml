@@ -1,0 +1,38 @@
+# Render.com deployment configuration
+# Docs: https://render.com/docs/render-yaml
+
+services:
+  - type: web
+    name: privacy-guard-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore  # Closest to India
+    plan: free          # Free tier — upgrade when needed
+    
+    healthCheckPath: /health
+    
+    envVars:
+      # ─────────────────────────────────────────────────────────────────
+      # REQUIRED: Set this in Render dashboard after creating Firebase project
+      # Value: Paste the entire content of your serviceAccountKey.json file
+      # ─────────────────────────────────────────────────────────────────
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false  # Set manually in Render dashboard (secret)
+      
+      # OPTIONAL: URL where your APK is hosted (Firebase Hosting)
+      - key: APK_DOWNLOAD_URL
+        value: https://your-project.web.app/PrivacyGuard.apk
+      
+      # OPTIONAL: Your web hosting URL
+      - key: WEB_HOSTING_URL
+        value: https://your-project.web.app
+      
+      # Environment
+      - key: ENVIRONMENT
+        value: production
+      
+      # Python
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+    autoDeploy: true  # Auto-deploy on git push
