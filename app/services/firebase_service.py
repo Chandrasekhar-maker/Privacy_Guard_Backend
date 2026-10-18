@@ -36,6 +36,23 @@ def _init_firebase():
                 "Set FIREBASE_SERVICE_ACCOUNT_JSON env var on Render, "
                 "or place serviceAccountKey.json in backend root for local dev."
             )
-        firebase_admin.initialize_app(cred)
+        app = firebase_admin.initialize_app(cred)
+    else:
+        app = firebase_admin.get_app()
 
-    _db = firestore.AsyncClient()
+    # Use the initialized app's project & credentials for the async client
+    try:
+        from google.oauth2 import service_account
+        if cred_json:
+            cred_info = json.loads(cred_json)
+            g_creds = service_account.Credentials.from_service_account_info(cred_info)
+            _db = firestore.AsyncClient(project=cred_info.get("project_id"), credentials=g_creds)
+        elif os.path.exists(cred_path):
+            g_creds = service_account.Credentials.from_service_account_file(cred_path)
+            _db = firestore.AsyncClient(credentials=g_creds)
+        else:
+            _db = firestore.AsyncClient()
+    except Exception as e:
+        print(f"Warning: Failed to init specialized AsyncClient: {e}, falling back to default")
+        _db = firestore.AsyncClient()
+
